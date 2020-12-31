@@ -270,11 +270,36 @@ module.exports = {
             return;
         }
 
+        var complete_command = "";
+        for(let i = 0; i < args.length; i++){
+            complete_command += args[i]+ " ";
+        }
+        console.log("complete : " + complete_command);
+        var values = complete_command.split(" ");
+        values = ArrayRemove(values, 0);
+        
+        for(let i = 0; i < values.length - 1; i++){
+            console.log("Value read: " + values[i]);
+            if(!isASCII(values[i])){
+                message.channel.send("Ti piace proprio l'arte di rompere il cazzo eh? Accetto solo caratteri ASCII, tiè");
+                return;
+            }
+            if(values[i].length > 100){
+                message.channel.send("Guarda che la lunghezza del messaggio " +
+                        "non è direttamente proporzionale alla lunghezza del cazzo, massimo 100 caratteri");
+                return;
+            }
+            if(values[i].length < 1){
+                message.channel.send("Si ma metti il nome e che cazzo");
+                return;
+            }
+        }
+
         if(global.IsRanked(message.guild.id, message.member.voice.channel.id, function(){
             CheckSyntax(message, args, client, message.member.voice.channel);
-        }), function(){
+        },function(){
             message.channel.send("Mi prendi per il culo? Vuoi cheattare? Devi essere in un canale privato per usare questo comando");
-        }){
+        } )){
         }
     }
 }

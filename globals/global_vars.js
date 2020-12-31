@@ -714,5 +714,3 @@ global.IsInWhiteList = function IsInWhiteList(server_id, channel_id, name, _call
         }                                                                               //
     }*/                                                                                   //
 }                                                                                       //
-
-

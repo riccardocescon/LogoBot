@@ -1,3 +1,6 @@
+const axios = require('axios')
+var qs = require('qs');
+
 function isASCII(str) {
     return /^[\x00-\x7F]*$/.test(str);
 }
@@ -76,6 +79,7 @@ class Rules {
     rules = ["w"];
 
     IsRule(line){
+        console.log("Line : " + line);
         if(line.charAt(1) !== " "){ //example -wLogos, it should be -w Logos
             return 1;   //Error 1, typo error
         }
@@ -108,38 +112,67 @@ class Rules {
     }
 
     AddWhiteList(args, channel, client, message){
-        if(!Array.isArray(args)){    //everyone can join
+        /*if(!Array.isArray(args)){    //everyone can join
             AddToWhiteList(channel, "*", message);
-        }
+        }*/
         var names = [];                                                 //Save given names
+        var end = false;
         for (let i = 1; i < args.length; i++) {                         //0 is for name and 1 is for size, start from 2
             var sim_name = GetSimilarName(client, args[i], message);    //
             if(sim_name != null){                                       //
                 names.push(sim_name);                                   //fix typo errors
             }                                                           //
-        }                                                               //
-
-        var id = [];                                                //get whitelists users' id
-        for (let i = 0; i < names.length; i++) {
-            var temp = client.users.cache.find(user => user.username == names[i]);
-            if(temp == null){
-                message.channel.send("Il nome " + names[i] + " non esiste brutto dislessico di merda, lo skippo");
-            }else{
-                id.push(temp.id);
+            else{
+                console.log("breaking");
+                end = true;
+                break;
             }
-        }
+        }                                                               //
+        console.log("end : " + end);
+        if(!end){
+            var id = [];                                                //get whitelists users' id
+            for (let i = 0; i < names.length; i++) {
+                var temp = client.users.cache.find(user => user.username == names[i]);
+                if(temp == null){
+                    message.channel.send("Il nome " + names[i] + " non esiste brutto dislessico di merda, lo skippo");
+                }else{
+                    id.push(temp.id);
+                }
+            }
 
-        AddToWhiteList(channel, id, message);
+            AddToWhiteList(channel, id, message);
+        }else{
+            axios({
+                method: 'post',
+                url: 'http://crart.altervista.org/discordbot/actions/deletechannel.php',
+                data: qs.stringify({
+                    server_id : message.guild.id,
+                    channel_id : channel.id
+                })
+            })
+            .then(result => {
+                if(result.data == "0"){
+                    channel.delete();
+                    return;
+                }
+                
+            })
+            .catch(error => {
+                console.error(error)
+            })
+            return;
+        }
     }
 
     HandleCommand(command, channel, client, message){
         var args = command.split(" ");
+        console.log("Args : " + command);
         switch(args[0]){
             case "w":
-                if(args[1] === "*"){
+                /*if(args[1] === "*"){
                     this.AddWhiteList("*", channel, client, message);
                     return;
-                }
+                }*/
                 this.AddWhiteList(ArrayRemove(args, args.length - 1), channel, client, message);
                 break;
         }
@@ -290,11 +323,29 @@ module.exports = {
                     var has_limit = has_rules[0].split(" ");
                     var has_limit_confirm = HasLimit(has_limit);
                     if(!has_limit_confirm){                                                     //If doesn't have rules and limit
-                        CreateChannel(message, complete_command, null, null, client);
+                    name = complete_command;
+                    if(name.length > 99){
+                        message.channel.send("Guarda che la lunghezza del messaggio " +
+                        "non è direttamente proporzionale alla lunghezza del cazzo, massimo 100 caratteri");
+                        return;
+        
+                    }else if(name.length < 1){
+                        message.channel.send("Si ma metti il nome e che cazzo");
+                        return;
+                    }
+                    if(!isASCII(name)){
+                        message.channel.send("Ti piace proprio l'arte di rompere il cazzo eh? Accetto solo caratteri ASCII, tiè");
+                        return;
+                    }
+                        CreateChannel(message, name, null, null, client);
                         return; 
                     }else{                                                                     //If doesn't have rules but has limit
                         size_pos = GetSizePosition(complete_command) - 1;
-                        name = RemoveLimit(complete_command);
+                        name = RemoveLimit(complete_command);  
+                        if(name == null){
+                            message.channel.send("Scusa come cazzo ti chiami? Il tuo bel nome di merda inizia con una lettera o con un numero?");
+                            return;
+                        }
                     }
                 }else{                                                                      //Has rules
                     var has_limit = complete_command.split(" ");
@@ -308,10 +359,11 @@ module.exports = {
                         name = RemoveLimit(name);
                     }
                 }
+
             }else{
                 if(args[0].length > 99){
                     message.channel.send("Guarda che la lunghezza del messaggio "+
-                    + "non è direttamente proporzionale alla lunghezza del cazzo, massimo 100 caratteri");
+                        "non è direttamente proporzionale alla lunghezza del cazzo, massimo 100 caratteri");
                     return;
     
                 }else if(args[0].length < 1){
@@ -353,38 +405,79 @@ module.exports = {
             for(let i = size_pos + 1; i < args.length; i++){                           //Build rules in a string
                 rule += args[i] + " ";                                      //
             }
-            if(rule === "")rule = "-w *";                                   //
-            var rules = [];
-            rules = rule.split("-");                                        //split the sting for each - (sub_rule)
-            rules = ArrayRemove(rules, 0);                                  //remove empty slot
-            //if(rules.length == 0)size = null;                               //if no rule assigned, then the channel won't have a limit, no one could join in it
-            var r = new Rules(); 
-            var error = false;
-            rules.forEach(rule_line => {
-                var result = r.IsRule(rule_line);                           //check rule syntax
-                switch (result) {
-                    case 0:
-                        //Everything is good
-                        break;
-
-                    case 1:
-                        message.channel.send("Ho capito che sei stupido, ma hai dimenticato lo spazio tra il comando e gli argomenti");
-                        error = true;
-                        return;
-
-                    case 2:
-                        message.channel.send("Stupido troglodita del cazzo, non esiste quel comando");
-                        error = true;
-                        return;
-                
-                    default:
-                        message.channel.send("Error : " + result);
-                        error = true;
-                        return;
+            if(rule === ""){
+                console.log("command : " + complete_command);
+                var elements = complete_command.split("-");
+                if(elements.length == 0){
+                    message.channel.send("Non esiste -");
+                }else{
+                    message.channel.send("Le cose sono 2. O il nome inizia con un numero, e mi pare che i tuoi genitori abbiano deciso di usare delle lettere" +
+                                    ", oppure non hai messo un cazzo, e mi pare che i tuoi genitori abbiano deciso di darti un nome");
+                    return;
+                    var command = false;
+                    var r = new Rules(); 
+                    for(let k = 1; k < elements.length; k++){
+                        var elem = elements[k];
+                        var parts = elem.split(" ");
+                        for(let j = 0; j < parts.length - 1; j++){
+                            var part = parts[j];
+                            if(r.IsRule(part)){
+                                console.log(part + " is a rule");
+                                command = true;
+                            }else{
+                                console.log(part + " is not a rule");
+                                if(!isASCII(part)){
+                                    message.channel.send("Che bel nome di merda che ti h anno dato i tuoi genitori, non sapevo fossero dei nemici dell'ASCII");
+                                    return;
+                                }else{
+                                    console.log(part + " is a ascii");
+                                    if(IsNumber(part)){
+                                        message.channel.send("Le cose sono 2. O il nome inizia con un numero, e mi pare che i tuoi genitori abbiano deciso di usare delle lettere" +
+                                    ", oppure non hai messo un cazzo, e mi pare che i tuoi genitori abbiano deciso di darti un nome");
+                                    return;
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-            });
+                /*message.channel.send("Le cose sono 2. O il nome inizia con un numero, e mi pare che i tuoi genitori abbiano deciso di usare delle lettere" +
+                                    ", oppure non hai messo un cazzo, e mi pare che i tuoi genitori abbiano deciso di darti un nome");
+                return;*/
+            }else{
+                var rules = [];
+                rules = rule.split("-");                                        //split the sting for each - (sub_rule)
+                rules = ArrayRemove(rules, 0);                                  //remove empty slot
+                //if(rules.length == 0)size = null;                               //if no rule assigned, then the channel won't have a limit, no one could join in it
+                var r = new Rules(); 
+                var error = false;
+                rules.forEach(rule_line => {
+                    var result = r.IsRule(rule_line);                           //check rule syntax
+                    switch (result) {
+                        case 0:
+                            //Everything is good
+                            break;
 
-            if(error)return;
+                        case 1:
+                            message.channel.send("Ho capito che sei stupido, ma hai dimenticato lo spazio tra il comando e gli argomenti");
+                            error = true;
+                            return;
+
+                        case 2:
+                            message.channel.send("Stupido troglodita del cazzo, non esiste quel comando");
+                            error = true;
+                            return;
+                    
+                        default:
+                            message.channel.send("Error : " + result);
+                            error = true;
+                            return;
+                    }
+                });
+
+                if(error)return;
+            }
+            
 
         //#endregion
             CreateChannel(message, name, size, rules, client);

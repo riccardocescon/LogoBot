@@ -43,8 +43,8 @@ client.on('message', message =>{
     }else if(command === 'editchannel' || command === 'ec'){
         client.command.get('editchannel').execute(message, args, client);
         //client.command.get('clear').execute(message, "1");
-    }else if(command === 'deletechannel' || command === 'dc'){
-        client.command.get('deletechannel').execute(message, args);
+    //}else if(command === 'deletechannel' || command === 'dc'){
+        //client.command.get('deletechannel').execute(message, args);
     }else if(command === 'help' || command === 'h'){
         client.command.get('help').execute(message, args, Discord);
     }
