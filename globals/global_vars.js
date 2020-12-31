@@ -4,8 +4,8 @@ const axios = require('axios')
 var FormData = require('form-data');
 global.readline = require('readline');
 global.path = "data.txt";
-
-class Dictionary{
+//#region to_remove
+/*class Dictionary{
     key;                                                                //channel id
     value = [];                                                         //all names in whitelist
 
@@ -98,8 +98,8 @@ class Dictionary{
         }                                                               //
         return false;                                                   //
     }                                                                   //
-}
-
+}*/
+/*
 function GetStringID(server_id){
     var server_string = "";
     const len = Math.ceil(Math.log10(server_id + 1))
@@ -342,7 +342,7 @@ global.Request = class Request{
                 return;
             }
         });*/
-    }
+    /*}
 
     AddWhiteListChannel(channeld_id, names, message, server_id){                       //Add people to the whitelist
         for(let i = 0; i < this.channels.length; i++){                  //Search the right channel (more than one could exists at the same time)
@@ -399,6 +399,105 @@ global.Request = class Request{
     }  
 }                                                                       //
 
+global.GetRankedChannelListLength = function GetRankedChannelListLength(server_id){ //Get Ranked channel list length
+    for(let i = 0; i < global.requests.length; i++){                                //Search for the given server
+        if(global.requests[i].server_id == server_id){                              //
+            return global.requests[i].GetRankedChannelListLength();                 //return it's length
+        }                                                                           //
+    }                                                                               //
+}                                                                                   //
+
+global.AddRankedChannel = function AddRankedChannel(server_id, name){               //Add new Ranked channel
+    for(let i = 0; i < global.requests.length; i++){                                //Search for the given server
+        if(global.requests[i].server_id == server_id){                              //
+            //console.log("Adding ranked : " + name);
+            global.requests[i].AddChannel(name, server_id);                                    //Register server
+        }                                                                           //
+    }                                                                               //
+}                                                                                   //
+
+global.GetWhiteListLength = function GetWhiteListLength(server_id, channel_id){ //Get Whitelist channel list length
+    for(let i = 0; i < global.requests.length; i++){                                    //Search for the given server
+        if(global.requests[i].server_id == server_id){                                  //
+            return global.requests[i].GetWhiteListLength(channel_id);                   //return it's length
+        }                                                                               //
+    }                                                                                   //
+}                                                                                       //
+
+global.HasWhiteList = function HasWhiteList(server_id, channel_id){
+    for(let i = 0; i < global.requests.length; i++){                                    //search for the given server
+        if(global.requests[i].server_id == server_id){                                  //
+            return global.requests[i].HasWhiteList(channel_id);                         //Search the right channel and check for user whitelist
+        }                                                                               //
+    } 
+}
+
+function IsNumber(value){
+    var parsed = Number.parseInt(value, 10);
+    if(Number.isNaN(parsed)){
+        return false;
+    }else{
+        return true;
+    }
+}
+
+function ArrayRemove(array = [], pos){
+    var res = [];
+    for(let i = 0; i < pos; i++){
+        res.push(array[i]);
+    }
+    for(let i = pos + 1; i < array.length; i++){
+        res.push(array[i]);
+    }
+    return res;
+}
+
+function GetFirstIncapsuled(line){
+    var numbers = "";
+    for(let i = 0; i < line.length; i++){
+        if(IsNumber(line.charAt(i))){
+            numbers += line.charAt(i);
+        }else{
+            return numbers;
+        }
+    }
+    return numbers;
+}
+
+//global.requests = [];                                                   //Saves every server that has created at least 1 ranked channel
+
+global.LoadRequests = function LoadRequests(){
+    //requests = [];
+    var file = fs.readFileSync(path).toString().split("{");     //Getting servers
+    file = ArrayRemove(file, 0);
+    for(let i = 0; i < file.length; i++){
+        var incapsuled_server = GetFirstIncapsuled(file[i]);
+        var temp = file[i].split("[");                          //Getting servers' channels
+        var req = new Request(incapsuled_server, null);
+        for(let j = 1; j < temp.length; j++){
+            var incapsuled_channel = GetFirstIncapsuled(temp[j]);
+            var incapsulated_whitelist = [];
+            var temp_white = temp[j].split("(");                //Getting channels' whitelist
+            for(let x = 1; x < temp_white.length; x++){
+                incapsulated_whitelist.push(GetFirstIncapsuled(temp_white[x]));
+            }
+            req.AddChannelLocal(incapsuled_channel, incapsulated_whitelist);
+        }
+
+        /*console.log("Summary (Load to requests):");
+        console.log("Adding server : " + req.server_id);
+        for(let x = 0; x < req.channels.length; x++){
+            console.log("channel : " + req.channels[x].key);
+            for(let y = 0; y < req.channels[x].value.length; y++){
+                console.log("whitelist : " + req.channels[x].value[y]);
+            }
+        }
+
+        //requests.push(req);
+    }
+}*/
+//#endregion
+
 function SaveServerChannelToDatabase(server_id, channel_id, _callback){
     console.log('\x1b[36mSaving server : \x1b[0m');
     axios
@@ -437,77 +536,7 @@ function SaveChannelToDatabase(server_id, channel_id, _callback){
     })
 }
 
-function IsNumber(value){
-    var parsed = Number.parseInt(value, 10);
-    if(Number.isNaN(parsed)){
-        return false;
-    }else{
-        return true;
-    }
-}
-
-function ArrayRemove(array = [], pos){
-    var res = [];
-    for(let i = 0; i < pos; i++){
-        res.push(array[i]);
-    }
-    for(let i = pos + 1; i < array.length; i++){
-        res.push(array[i]);
-    }
-    return res;
-}
-
-function GetFirstIncapsuled(line){
-    var numbers = "";
-    for(let i = 0; i < line.length; i++){
-        if(IsNumber(line.charAt(i))){
-            numbers += line.charAt(i);
-        }else{
-            return numbers;
-        }
-    }
-    return numbers;
-}
-
-global.requests = [];                                                   //Saves every server that has created at least 1 ranked channel
-
-global.LoadRequests = function LoadRequests(){
-    requests = [];
-    var file = fs.readFileSync(path).toString().split("{");     //Getting servers
-    file = ArrayRemove(file, 0);
-    for(let i = 0; i < file.length; i++){
-        var incapsuled_server = GetFirstIncapsuled(file[i]);
-        var temp = file[i].split("[");                          //Getting servers' channels
-        var req = new Request(incapsuled_server, null);
-        for(let j = 1; j < temp.length; j++){
-            var incapsuled_channel = GetFirstIncapsuled(temp[j]);
-            var incapsulated_whitelist = [];
-            var temp_white = temp[j].split("(");                //Getting channels' whitelist
-            for(let x = 1; x < temp_white.length; x++){
-                incapsulated_whitelist.push(GetFirstIncapsuled(temp_white[x]));
-            }
-            req.AddChannelLocal(incapsuled_channel, incapsulated_whitelist);
-        }
-
-        /*console.log("Summary (Load to requests):");
-        console.log("Adding server : " + req.server_id);
-        for(let x = 0; x < req.channels.length; x++){
-            console.log("channel : " + req.channels[x].key);
-            for(let y = 0; y < req.channels[x].value.length; y++){
-                console.log("whitelist : " + req.channels[x].value[y]);
-            }
-        }*/
-
-        requests.push(req);
-    }
-}
-
 global.GetRequest = function GetRequest(server_id, channel_id, _callback){                                 //Get server data by server id
-    //fai le tue cose
-
-    _callback();
-
-
     axios
     .post(
         'http://crart.altervista.org/discordbot/actions/checkserver.php',
@@ -533,15 +562,6 @@ global.GetRequest = function GetRequest(server_id, channel_id, _callback){      
     .catch(error => {
         console.error(error)
     })                                                                    //
-}                                                                                   //
-
-global.AddRankedChannel = function AddRankedChannel(server_id, name){               //Add new Ranked channel
-    for(let i = 0; i < global.requests.length; i++){                                //Search for the given server
-        if(global.requests[i].server_id == server_id){                              //
-            //console.log("Adding ranked : " + name);
-            global.requests[i].AddChannel(name, server_id);                                    //Register server
-        }                                                                           //
-    }                                                                               //
 }                                                                                   //
 
     //Add user to a ranked channel
@@ -607,14 +627,6 @@ global.RemoveUserWhiteList = function RemoveUserWhiteList(server_id, channel_id 
     }*/                                                                               //
 } 
 
-global.GetRankedChannelListLength = function GetRankedChannelListLength(server_id){ //Get Ranked channel list length
-    for(let i = 0; i < global.requests.length; i++){                                //Search for the given server
-        if(global.requests[i].server_id == server_id){                              //
-            return global.requests[i].GetRankedChannelListLength();                 //return it's length
-        }                                                                           //
-    }                                                                               //
-}                                                                                   //
-
 global.IsRanked = function IsRanked(server_id, channel_id, _callback_ranked, _callback_not_ranked){                         //Check if given channel is ranked
     
     CheckServer(server_id, channel_id ,function(){
@@ -669,13 +681,6 @@ function CheckServer(server_id, channel_id, _callback){
     })
 }
 
-global.GetWhiteListLength = function GetWhiteListLength(server_id, channel_id){ //Get Whitelist channel list length
-    for(let i = 0; i < global.requests.length; i++){                                    //Search for the given server
-        if(global.requests[i].server_id == server_id){                                  //
-            return global.requests[i].GetWhiteListLength(channel_id);                   //return it's length
-        }                                                                               //
-    }                                                                                   //
-}                                                                                       //
 
 global.IsInWhiteList = function IsInWhiteList(server_id, channel_id, name, _callback){             //Check if user is in whitelist
     console.log("Checking whitelist : " + name);
@@ -709,13 +714,5 @@ global.IsInWhiteList = function IsInWhiteList(server_id, channel_id, name, _call
         }                                                                               //
     }*/                                                                                   //
 }                                                                                       //
-
-global.HasWhiteList = function HasWhiteList(server_id, channel_id){
-    for(let i = 0; i < global.requests.length; i++){                                    //search for the given server
-        if(global.requests[i].server_id == server_id){                                  //
-            return global.requests[i].HasWhiteList(channel_id);                         //Search the right channel and check for user whitelist
-        }                                                                               //
-    } 
-}
 
 

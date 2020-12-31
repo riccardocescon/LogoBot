@@ -103,9 +103,9 @@ client.on('voiceStateUpdate', (oldState, newState) => {
     }
 
     //Check this channel is ranked
-    var ranked_list_length = global.GetRankedChannelListLength(server_id);
+    //var ranked_list_length = global.GetRankedChannelListLength(server_id);
 
-    if(ranked_list_length == 0){return;}
+    //if(ranked_list_length == 0){return;}
     if(!global.IsRanked(server_id, channel_id, function(){
         //Check whitelist
         if(/*global.HasWhiteList(server_id, channel_id)*/true){
