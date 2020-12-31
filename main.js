@@ -22,8 +22,6 @@ client.once('ready', ()=>{
     console.log('LogoBot is online');
     const variable = require('./globals/global_vars.js');
     variable.names = "pr";
-
-    //global.LoadRequests();
 });
 
 client.on('message', message =>{
@@ -81,7 +79,6 @@ client.on('voiceStateUpdate', (oldState, newState) => {
                     })
                 })
                 .then(result => {
-                    console.log("got removed lol : " + result.data)
                     if(result.data == "0"){
                         console.log("removed channel");
                         oldState.channel.delete();
@@ -102,16 +99,13 @@ client.on('voiceStateUpdate', (oldState, newState) => {
 
     }
 
-    //Check this channel is ranked
-    //var ranked_list_length = global.GetRankedChannelListLength(server_id);
-
-    //if(ranked_list_length == 0){return;}
     if(!global.IsRanked(server_id, channel_id, function(){
         //Check whitelist
         if(/*global.HasWhiteList(server_id, channel_id)*/true){
             var id = newState.member.id;
             if(!global.IsInWhiteList(server_id, channel_id, id, function(){
                  newState.setChannel(null);
+                 console.log(newState.member.nickname + " tried to join in " + newState.channel.name);
             })){
             }
         }else{

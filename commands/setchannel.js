@@ -414,36 +414,8 @@ module.exports = {
                     message.channel.send("Le cose sono 2. O il nome inizia con un numero, e mi pare che i tuoi genitori abbiano deciso di usare delle lettere" +
                                     ", oppure non hai messo un cazzo, e mi pare che i tuoi genitori abbiano deciso di darti un nome");
                     return;
-                    var command = false;
-                    var r = new Rules(); 
-                    for(let k = 1; k < elements.length; k++){
-                        var elem = elements[k];
-                        var parts = elem.split(" ");
-                        for(let j = 0; j < parts.length - 1; j++){
-                            var part = parts[j];
-                            if(r.IsRule(part)){
-                                console.log(part + " is a rule");
-                                command = true;
-                            }else{
-                                console.log(part + " is not a rule");
-                                if(!isASCII(part)){
-                                    message.channel.send("Che bel nome di merda che ti h anno dato i tuoi genitori, non sapevo fossero dei nemici dell'ASCII");
-                                    return;
-                                }else{
-                                    console.log(part + " is a ascii");
-                                    if(IsNumber(part)){
-                                        message.channel.send("Le cose sono 2. O il nome inizia con un numero, e mi pare che i tuoi genitori abbiano deciso di usare delle lettere" +
-                                    ", oppure non hai messo un cazzo, e mi pare che i tuoi genitori abbiano deciso di darti un nome");
-                                    return;
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    
                 }
-                /*message.channel.send("Le cose sono 2. O il nome inizia con un numero, e mi pare che i tuoi genitori abbiano deciso di usare delle lettere" +
-                                    ", oppure non hai messo un cazzo, e mi pare che i tuoi genitori abbiano deciso di darti un nome");
-                return;*/
             }else{
                 var rules = [];
                 rules = rule.split("-");                                        //split the sting for each - (sub_rule)
