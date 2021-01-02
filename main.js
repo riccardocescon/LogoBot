@@ -116,6 +116,6 @@ client.on('voiceStateUpdate', (oldState, newState) => {
     
   })
 
+  require("./botdata");
 
-
-client.login('NzEyNjU2NjMzMzMwOTI1NzAw.XsUvNQ.ZTfrGDWQo-ZgMAQGjS-f3SekC74');
+client.login(global.token);
